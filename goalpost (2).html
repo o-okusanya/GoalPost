@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GoalPost</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<style>
+:root {
+  --bg:#0f0a1f;
+  --card:#1a1333;
+  --text:#f3f0ff;
+  --muted:#b9b3d9;
+  --accent:#a855f7;
+  --accent-glow:#c084fc;
+  --border:#2a1f4a;
+  --success:#34d399;
+  --danger:#ff4d4d;
+  --warning:#f59e0b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin:0;
+  font-family:'DM Sans', sans-serif;
+  background: radial-gradient(circle at top, #1a1333, #0f0a1f);
+  color:var(--text);
+  min-height:100vh;
+}
+
+.view { display:none; }
+.view.active { display:flex; }
+
+/* LOGIN */
+#loginView { justify-content:center; align-items:center; min-height:100vh; }
+
+.card {
+  background:var(--card);
+  padding:32px 28px;
+  border-radius:18px;
+  width:360px;
+  border:1px solid var(--border);
+  box-shadow:0 16px 50px rgba(0,0,0,0.5), 0 0 40px rgba(168,85,247,0.08);
+}
+
+.logo { font-family:'Syne',sans-serif; color:#c084fc; font-size:24px; font-weight:700; margin:0 0 4px; }
+.tagline { color:var(--muted); font-size:13px; margin:0 0 24px; }
+
+.field-label {
+  display:block; font-size:12px; color:var(--muted);
+  text-transform:uppercase; letter-spacing:0.07em; margin:14px 0 5px;
+}
+
+.card input {
+  width:100%; padding:10px 12px; border-radius:8px;
+  border:1px solid var(--border); background:#120d25;
+  color:white; font-family:'DM Sans',sans-serif; font-size:14px; transition:border 0.15s;
+}
+.card input:focus { outline:none; border-color:var(--accent); }
+
+.btn-primary {
+  width:100%; padding:11px; margin-top:18px; border:none; border-radius:8px;
+  background:var(--accent); color:white; cursor:pointer;
+  font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500;
+  box-shadow:0 0 14px rgba(168,85,247,0.4); transition:all 0.15s;
+}
+.btn-primary:hover { transform:scale(1.02); box-shadow:0 0 22px rgba(168,85,247,0.55); }
+
+.btn-secondary {
+  width:100%; padding:10px; margin-top:8px; border:1px solid var(--border);
+  border-radius:8px; background:transparent; color:var(--muted);
+  cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; transition:all 0.15s;
+}
+.btn-secondary:hover { border-color:var(--accent); color:var(--text); }
+
+.message { margin-top:12px; font-size:13px; min-height:18px; }
+.message.error   { color:#ff6b6b; }
+.message.success { color:#34d399; }
+
+/* PASSWORD STRENGTH */
+.bar-wrap { display:flex; gap:4px; margin-top:10px; }
+.bar { height:6px; flex:1; background:#2a1f4a; border-radius:4px; transition:background 0.2s; }
+.bar.active.red    { background:#ff4d4d; }
+.bar.active.orange { background:#ff914d; }
+.bar.active.green  { background:#22c55e; }
+
+#passwordRules { margin:10px 0 0; padding-left:18px; font-size:12px; list-style:disc; }
+#passwordRules li { color:#ff6b6b; margin-top:4px; transition:color 0.2s; }
+#passwordRules li.valid { color:#22c55e; }
+
+.name-row { display:flex; gap:8px; }
+.name-row input { flex:1; }
+
+/* DASHBOARD SHELL */
+#dashView { min-height:100vh; }
+
+.sidebar {
+  width:220px; min-height:100vh; background:#140f2a;
+  padding:24px 16px; border-right:1px solid var(--border);
+  display:flex; flex-direction:column; gap:4px; flex-shrink:0;
+}
+.sidebar .logo { margin-bottom:24px; padding-left:8px; }
+
+.nav-item {
+  padding:10px 14px; border-radius:8px; cursor:pointer;
+  color:var(--muted); font-size:14px; font-weight:500; transition:all 0.15s;
+}
+.nav-item:hover  { background:var(--accent); color:white; }
+.nav-item.active { background:#251b4a; color:var(--text); }
+
+.main { flex:1; padding:28px; overflow-y:auto; }
+
+.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+.header h1 { margin:0; font-family:'Syne',sans-serif; font-size:26px; }
+
+.user-pill {
+  color:var(--muted); font-size:13px; background:#1e163d;
+  padding:6px 14px; border-radius:20px; border:1px solid var(--border);
+}
+
+/* STATS */
+.stats { display:flex; gap:12px; margin-bottom:20px; }
+.stat-card { flex:1; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px 16px; }
+.stat-card .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:4px; }
+.stat-card .value { font-size:22px; font-family:'Syne',sans-serif; font-weight:700; color:var(--accent-glow); }
+
+/* GOAL FORM */
+.goal-form { background:var(--card); padding:18px; border-radius:14px; border:1px solid var(--border); margin-bottom:24px; }
+.goal-form h3 { margin:0 0 14px; font-family:'Syne',sans-serif; font-size:15px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+
+.form-row { display:flex; gap:10px; flex-wrap:wrap; }
+.form-row input, .form-row select {
+  flex:1; min-width:140px; padding:10px 12px; border-radius:8px;
+  border:1px solid var(--border); background:#120d25; color:white;
+  font-family:'DM Sans',sans-serif; font-size:14px; transition:border 0.15s;
+}
+.form-row input:focus, .form-row select:focus { outline:none; border-color:var(--accent); }
+
+.type-toggle { display:flex; gap:8px; margin-top:12px; }
+.type-btn {
+  flex:1; padding:8px; border-radius:8px; border:1px solid var(--border);
+  background:#120d25; color:var(--muted); cursor:pointer;
+  font-size:13px; font-family:'DM Sans',sans-serif; transition:all 0.15s; text-align:center;
+}
+.type-btn.selected { background:#2d1f5a; border-color:var(--accent); color:var(--accent-glow); }
+
+.add-btn {
+  margin-top:12px; width:100%; padding:10px; border-radius:8px; border:none;
+  background:var(--accent); color:white; cursor:pointer;
+  font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500;
+  box-shadow:0 0 12px rgba(168,85,247,0.35); transition:all 0.15s;
+}
+.add-btn:hover { transform:scale(1.02); box-shadow:0 0 20px rgba(168,85,247,0.5); }
+
+.error { color:#ff6b6b; font-size:13px; margin-top:10px; }
+
+/* GOAL CARDS */
+.goals-grid { display:flex; flex-direction:column; gap:12px; }
+.goal { background:var(--card); padding:16px 18px; border-radius:14px; border:1px solid var(--border); transition:border 0.2s; }
+.goal:hover { border-color:#3d2a6a; }
+.goal.completed-goal { opacity:0.7; border-color:#1f3a2a; }
+
+.goal-header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.goal-meta { display:flex; flex-direction:column; gap:3px; }
+.goal-title { font-weight:600; font-family:'Syne',sans-serif; font-size:15px; }
+.goal-title.struck { text-decoration:line-through; color:var(--muted); }
+.goal-badges { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+
+.badge { font-size:11px; padding:2px 8px; border-radius:20px; font-weight:500; }
+.badge-category { background:#2a1f4a; color:var(--muted); }
+.badge-type     { background:#1e2f40; color:#67d5f7; }
+.badge-done     { background:#1a3a28; color:var(--success); }
+.badge-folder   { background:#1f1a3a; color:#a78bfa; }
+
+.progress-section { margin-top:14px; }
+.progress-label { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:6px; }
+.progress-bar { height:8px; background:#2a1f4a; border-radius:5px; overflow:hidden; }
+.fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent-glow)); border-radius:5px; transition:width 0.3s ease; }
+
+input[type="range"] { width:100%; margin-top:10px; accent-color:var(--accent); cursor:pointer; }
+
+.checkbox-section { margin-top:14px; display:flex; align-items:center; gap:10px; }
+.checkbox-section label { font-size:13px; color:var(--muted); cursor:pointer; user-select:none; }
+.custom-checkbox { width:20px; height:20px; accent-color:var(--success); cursor:pointer; flex-shrink:0; }
+
+.actions { margin-top:12px; display:flex; gap:8px; }
+.actions button { padding:5px 14px; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-family:'DM Sans',sans-serif; font-weight:500; transition:opacity 0.15s; }
+.actions button:hover { opacity:0.8; }
+.btn-delete { background:#3a1212; color:#ff6b6b; border:1px solid #5a1a1a !important; }
+.btn-edit   { background:#1e163d; color:var(--muted); border:1px solid var(--border) !important; }
+
+.empty { text-align:center; color:var(--muted); padding:40px 20px; font-size:14px; }
+
+/* FOLDERS */
+.folder-form { background:var(--card); padding:18px; border-radius:14px; border:1px solid var(--border); margin-bottom:24px; }
+.folder-form h3 { margin:0 0 14px; font-family:'Syne',sans-serif; font-size:15px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+.folder-input-row { display:flex; gap:10px; }
+.folder-input-row input {
+  flex:1; padding:10px 12px; border-radius:8px; border:1px solid var(--border);
+  background:#120d25; color:white; font-family:'DM Sans',sans-serif; font-size:14px; transition:border 0.15s;
+}
+.folder-input-row input:focus { outline:none; border-color:var(--accent); }
+.folder-input-row button {
+  padding:10px 18px; border:none; border-radius:8px; background:var(--accent); color:white;
+  cursor:pointer; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500;
+  box-shadow:0 0 12px rgba(168,85,247,0.35); transition:all 0.15s; white-space:nowrap;
+}
+.folder-input-row button:hover { transform:scale(1.02); box-shadow:0 0 20px rgba(168,85,247,0.5); }
+
+.folders-grid { display:flex; flex-direction:column; gap:16px; }
+.folder-card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; transition:border 0.2s; }
+.folder-card.open { border-color:#3d2a6a; }
+.folder-header { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; cursor:pointer; user-select:none; }
+.folder-header:hover { background:#1e163d; }
+.folder-name { font-family:'Syne',sans-serif; font-size:15px; font-weight:600; display:flex; align-items:center; gap:8px; }
+.folder-count { font-size:12px; color:var(--muted); background:#2a1f4a; padding:2px 8px; border-radius:12px; }
+.folder-chevron { color:var(--muted); font-size:12px; transition:transform 0.2s; }
+.folder-card.open .folder-chevron { transform:rotate(90deg); }
+.folder-goals { display:none; flex-direction:column; gap:8px; padding:0 14px 14px; }
+.folder-card.open .folder-goals { display:flex; }
+.folder-goal-item { background:#120d25; border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+.folder-goal-item .goal-title { font-size:14px; margin-bottom:4px; }
+.folder-empty { color:var(--muted); font-size:13px; padding:8px 4px; font-style:italic; }
+.folder-delete-btn { padding:4px 10px; border:1px solid #5a1a1a; border-radius:6px; background:#3a1212; color:#ff6b6b; cursor:pointer; font-size:12px; font-family:'DM Sans',sans-serif; transition:opacity 0.15s; }
+.folder-delete-btn:hover { opacity:0.8; }
+
+/* ANALYTICS */
+#analyticsSection { max-width:1100px; }
+
+.an-metrics { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
+.an-metric { background:var(--card); border-radius:10px; padding:16px; border:1px solid var(--border); transition:all 0.2s; }
+.an-metric:hover { border-color:var(--accent); box-shadow:0 0 20px rgba(168,85,247,0.1); }
+.an-metric-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; font-weight:600; }
+.an-metric-val { font-family:'Syne',sans-serif; font-size:28px; font-weight:700; color:var(--accent-glow); line-height:1; margin-bottom:6px; }
+.an-metric-delta { font-size:11px; display:flex; align-items:center; gap:4px; }
+.delta-up   { color:var(--success); }
+.delta-down { color:var(--danger); }
+
+.an-row { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:20px; }
+@media(max-width:900px) { .an-row { grid-template-columns:1fr; } }
+
+.an-card { background:var(--card); border-radius:12px; border:1px solid var(--border); padding:20px; transition:all 0.2s; }
+.an-card:hover { border-color:var(--accent); box-shadow:0 0 20px rgba(168,85,247,0.08); }
+.an-card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:12px; }
+.an-card-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:600; color:var(--text); }
+.an-card-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+
+.an-legend { display:flex; gap:16px; font-size:12px; }
+.an-legend span { display:flex; align-items:center; gap:6px; color:var(--muted); }
+.an-legend-dot { width:8px; height:8px; border-radius:2px; }
+
+.an-goal-list { display:flex; flex-direction:column; gap:12px; }
+.an-goal-item { padding:10px 0; border-bottom:1px solid var(--border); }
+.an-goal-item:last-child { border-bottom:none; }
+.an-goal-info { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.an-goal-name { font-size:13px; color:var(--text); font-weight:500; }
+.an-goal-pct { font-size:12px; font-weight:600; }
+.an-bar-track { width:100%; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+.an-bar-fill { height:100%; border-radius:3px; transition:width 0.4s ease; }
+
+.an-table-wrapper { overflow-x:auto; }
+.an-table { width:100%; border-collapse:collapse; font-size:13px; }
+.an-table thead { border-bottom:1px solid var(--border); }
+.an-table th { text-align:left; padding:12px 8px; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.05em; }
+.an-table td { padding:12px 8px; border-bottom:1px solid var(--border); color:var(--text); }
+.an-table tbody tr:hover { background:rgba(168,85,247,0.05); }
+
+.an-badge { display:inline-block; padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+.badge-on  { background:rgba(52,211,153,0.2); color:var(--success); border:1px solid rgba(52,211,153,0.3); }
+.badge-at  { background:rgba(245,158,11,0.2); color:var(--warning); border:1px solid rgba(245,158,11,0.3); }
+.badge-off { background:rgba(255,77,77,0.2);  color:var(--danger);  border:1px solid rgba(255,77,77,0.3);  }
+
+.an-period { display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+.an-period span { font-size:12px; padding:6px 12px; cursor:pointer; color:var(--muted); transition:all 0.2s; font-weight:500; }
+.an-period span:hover { color:var(--text); }
+.an-period span.active { background:var(--accent); color:white; box-shadow:0 0 12px rgba(168,85,247,0.4); }
+
+.an-guide { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:20px; margin-bottom:20px; display:none; }
+.an-guide.show { display:block; }
+.an-guide-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:var(--accent-glow); margin-bottom:12px; }
+.an-guide-section { margin-bottom:16px; }
+.an-guide-section h4 { font-size:13px; color:var(--text); font-weight:600; margin-bottom:6px; }
+.an-guide-section p  { font-size:12px; color:var(--muted); line-height:1.6; margin:0; }
+.an-guide-list { list-style:none; margin:6px 0 0; padding:0; }
+.an-guide-list li { font-size:12px; color:var(--muted); padding:4px 0 4px 20px; position:relative; line-height:1.5; }
+.an-guide-list li:before { content:"▸"; position:absolute; left:0; color:var(--accent); }
+
+.toggle-guide-btn {
+  background:transparent; border:1px solid var(--border); color:var(--muted);
+  padding:7px 14px; border-radius:6px; font-size:12px; cursor:pointer;
+  transition:all 0.2s; font-weight:500; font-family:'DM Sans',sans-serif;
+}
+.toggle-guide-btn:hover { color:var(--text); border-color:var(--accent); }
+
+#analyticsSection select {
+  padding:6px 10px; border-radius:6px; border:1px solid var(--border);
+  background:var(--card); color:var(--text); font-family:'DM Sans',sans-serif;
+  font-size:12px; cursor:pointer; transition:all 0.2s;
+}
+#analyticsSection select:hover  { border-color:var(--accent); }
+#analyticsSection select:focus  { outline:none; border-color:var(--accent); }
+#analyticsSection select option { background:var(--card); color:var(--text); }
+
+.hidden { display:none !important; }
+
+::-webkit-scrollbar { width:8px; }
+::-webkit-scrollbar-track { background:var(--card); }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN VIEW -->
+<div id="loginView" class="view">
+  <div class="card">
+    <div class="logo">⚑ GoalPost</div>
+    <p class="tagline" id="loginTagline">Stay on top of your goals and schedule</p>
+
+    <div id="loginSection">
+      <label class="field-label">Email</label>
+      <input id="loginEmail" type="email" placeholder="you@example.com">
+      <label class="field-label">Password</label>
+      <input id="loginPassword" type="password" placeholder="••••••••">
+      <button class="btn-primary" onclick="login()">Login</button>
+      <button class="btn-secondary" onclick="showRegister()">Create Account</button>
+    </div>
+
+    <div id="registerSection" class="hidden">
+      <div class="name-row">
+        <div style="flex:1;"><label class="field-label">First Name</label><input id="firstName" placeholder="First"></div>
+        <div style="flex:1;"><label class="field-label">Last Name</label><input id="lastName" placeholder="Last"></div>
+      </div>
+      <label class="field-label">Email</label>
+      <input id="registerEmail" type="email" placeholder="you@example.com">
+      <label class="field-label">Confirm Email</label>
+      <input id="confirmEmail" type="email" placeholder="you@example.com again">
+      <label class="field-label">Password</label>
+      <input id="registerPassword" type="password" placeholder="••••••••">
+      <div class="bar-wrap">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+      <ul id="passwordRules">
+        <li id="lengthRule">At least 8 characters</li>
+        <li id="numberRule">Contains a number</li>
+        <li id="symbolRule">Contains a symbol (!@#$%^&*)</li>
+        <li id="caseRule">Uppercase &amp; lowercase letter</li>
+      </ul>
+      <label class="field-label">Confirm Password</label>
+      <input id="confirmPassword" type="password" placeholder="••••••••">
+      <button class="btn-primary" onclick="register()">Register Account</button>
+      <button class="btn-secondary" onclick="showLogin()">← Back to Login</button>
+    </div>
+
+    <div id="loginMsg" class="message"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="gpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+  <div style="background:#1a1333;border:1px solid #2a1f4a;border-radius:16px;padding:28px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+    <div id="gpModalTitle" style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:8px;"></div>
+    <div id="gpModalBody" style="font-size:13px;color:#b9b3d9;margin-bottom:20px;"></div>
+    <input id="gpModalInput" type="text" style="display:none;width:100%;padding:10px 12px;border-radius:8px;border:1px solid #2a1f4a;background:#120d25;color:white;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:16px;">
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button id="gpModalCancel" onclick="closeModal()" style="padding:8px 16px;border:1px solid #2a1f4a;border-radius:8px;background:transparent;color:#b9b3d9;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;">Cancel</button>
+      <button id="gpModalConfirm" style="padding:8px 16px;border:none;border-radius:8px;background:#a855f7;color:white;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;box-shadow:0 0 12px rgba(168,85,247,0.4);">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD VIEW -->
+<div id="dashView" class="view">
+
+  <div class="sidebar">
+    <div class="logo">⚑ GoalPost</div>
+    <div class="nav-item active" id="navDashboard" onclick="switchSection('dashboard')">📊 Dashboard</div>
+    <div class="nav-item"        id="navFolders"   onclick="switchSection('folders')">📁 Folders</div>
+    <div class="nav-item"        id="navAnalytics" onclick="switchSection('analytics')">📈 Analytics</div>
+    <div class="nav-item"        onclick="logout()">🚪 Logout</div>
+    <p style="margin-top:auto;font-size:12px;color:var(--muted);padding-left:8px;">
+      Logged in as:<br><span id="userLabel" style="color:var(--text);"></span>
+    </p>
+  </div>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div id="dashboardSection">
+      <div class="header">
+        <h1>Dashboard</h1>
+        <div class="user-pill">👤 <span id="userLabel2"></span></div>
+      </div>
+      <div class="stats">
+        <div class="stat-card"><div class="label">Total Goals</div><div class="value" id="statTotal">0</div></div>
+        <div class="stat-card"><div class="label">Completed</div><div class="value" id="statDone">0</div></div>
+        <div class="stat-card"><div class="label">Avg Progress</div><div class="value" id="statAvg">—</div></div>
+        <div class="stat-card"><div class="label">Folders</div><div class="value" id="statFolders">0</div></div>
+      </div>
+      <div class="goal-form">
+        <h3>New Goal</h3>
+        <div class="form-row">
+          <input id="goalName" placeholder="Goal name…">
+          <select id="goalCategory">
+            <option value="">Category</option>
+            <option value="Health">Health</option>
+            <option value="Social">Social</option>
+            <option value="Emotional">Emotional</option>
+            <option value="Business">Business</option>
+            <option value="Learning">Learning</option>
+            <option value="Finance">Finance</option>
+            <option value="Other">Other</option>
+          </select>
+          <select id="goalFolder"><option value="None">No Folder</option></select>
+        </div>
+        <div class="type-toggle">
+          <div class="type-btn selected" id="typeProgress" onclick="selectType('progress')">📊 Progress Bar</div>
+          <div class="type-btn"          id="typeCheckbox" onclick="selectType('checkbox')">✅ Checkbox</div>
+        </div>
+        <button class="add-btn" onclick="addGoal()">+ Add Goal</button>
+        <p id="formError" class="error"></p>
+      </div>
+      <div class="goals-grid" id="goals"></div>
+    </div>
+
+    <!-- FOLDERS -->
+    <div id="foldersSection" style="display:none;">
+      <div class="header">
+        <h1>Folders</h1>
+        <div class="user-pill">👤 <span id="userLabel3"></span></div>
+      </div>
+      <div class="folder-form">
+        <h3>New Folder</h3>
+        <div class="folder-input-row">
+          <input id="folderName" placeholder="Folder name…">
+          <button onclick="addFolder()">+ Create Folder</button>
+        </div>
+        <p id="folderError" class="error"></p>
+      </div>
+      <div class="folders-grid" id="foldersGrid"></div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div id="analyticsSection" style="display:none;">
+      <div class="header">
+        <h1>Analytics</h1>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="an-period" id="anPeriod">
+            <span class="active" onclick="setPeriod(this)">This Week</span>
+            <span onclick="setPeriod(this)">This Month</span>
+            <span onclick="setPeriod(this)">This Quarter</span>
+          </div>
+          <div class="user-pill">👤 <span id="userLabel4"></span></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <button class="toggle-guide-btn" id="guideToggleBtn" onclick="toggleGuide()">📖 Show Analytics Guide</button>
+      </div>
+
+      <div id="analyticsGuide" class="an-guide">
+        <div class="an-guide-title">📊 Analytics Dashboard Guide</div>
+        <div class="an-guide-section">
+          <h4>Overview</h4>
+          <p>This analytics dashboard shows your personal goal-tracking performance pulled directly from your goals data.</p>
+        </div>
+        <div class="an-guide-section">
+          <h4>🔢 Key Metrics</h4>
+          <ul class="an-guide-list">
+            <li><strong>Goals Completed:</strong> Goals finished (checkbox ticked or progress at 100%).</li>
+            <li><strong>On-Track Rate:</strong> % of progress goals at 50% or higher.</li>
+            <li><strong>Avg. Completion:</strong> Average % across all progress-bar goals.</li>
+            <li><strong>Active Goals:</strong> All goals in your account.</li>
+          </ul>
+        </div>
+        <div class="an-guide-section">
+          <h4>📈 Goal Progress Over Time</h4>
+          <p>Line chart showing your actual goals created and completed, bucketed by the week they happened. Goals created before this update have no timestamp, so only new activity will appear. The chart covers the last 12 weeks and fills in organically as you use the app.</p>
+        </div>
+        <div class="an-guide-section">
+          <h4>⭐ Top Goals by Progress</h4>
+          <p>Your top 5 progress-bar goals. Green = 75%+, purple = 50–74%, orange = 25–49%, red = below 25%.</p>
+        </div>
+        <div class="an-guide-section">
+          <h4>📋 Goal Breakdown Table</h4>
+          <p>All your goals with category, type, progress bar, and status badge. Filter by category or type using the dropdowns.</p>
+        </div>
+      </div>
+
+      <div class="an-metrics" id="anMetrics"></div>
+
+      <div class="an-row">
+        <div class="an-card">
+          <div class="an-card-header">
+            <div>
+              <div class="an-card-title">Goal progress over time</div>
+              <div class="an-card-sub">Goals created &amp; completed by week (real data)</div>
+            </div>
+            <div class="an-legend">
+              <span><span class="an-legend-dot" style="background:var(--accent);"></span>Completed</span>
+              <span><span class="an-legend-dot" style="background:var(--accent-glow);"></span>Created</span>
+            </div>
+          </div>
+          <div style="position:relative;width:100%;height:240px;">
+            <canvas id="anLineChart"></canvas>
+            <div id="anChartNotice" style="display:flex;position:absolute;inset:0;align-items:center;justify-content:center;flex-direction:column;gap:6px;pointer-events:none;">
+              <span style="font-size:28px;">📭</span>
+              <span style="font-size:12px;color:var(--muted);text-align:center;">No data yet — chart fills in as you<br>create and complete goals.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="an-card">
+          <div class="an-card-header">
+            <div>
+              <div class="an-card-title">Top goals by progress</div>
+              <div class="an-card-sub">Your highest-progress goals</div>
+            </div>
+          </div>
+          <div class="an-goal-list" id="anTopGoals"></div>
+        </div>
+      </div>
+
+      <div class="an-card">
+        <div class="an-card-header">
+          <div class="an-card-title">Goal breakdown</div>
+          <div style="display:flex;gap:8px;">
+            <select id="anCategoryFilter" onchange="renderAnalyticsTable()">
+              <option value="">All categories</option>
+              <option value="Health">Health</option>
+              <option value="Social">Social</option>
+              <option value="Emotional">Emotional</option>
+              <option value="Business">Business</option>
+              <option value="Learning">Learning</option>
+              <option value="Finance">Finance</option>
+              <option value="Other">Other</option>
+            </select>
+            <select id="anTypeFilter" onchange="renderAnalyticsTable()">
+              <option value="">All types</option>
+              <option value="progress">Progress Bar</option>
+              <option value="checkbox">Checkbox</option>
+            </select>
+          </div>
+        </div>
+        <div class="an-table-wrapper">
+          <table class="an-table">
+            <thead>
+              <tr>
+                <th>Goal</th><th>Category</th><th>Type</th><th>Progress</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="anTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Config ──
+const API = "http://localhost:4000";
+
+// ── State ──
+let goals   = [];
+let folders = [];
+let token           = localStorage.getItem("gp_token") || null;
+let currentUser     = localStorage.getItem("gp_user")  || null;
+let currentUserName = localStorage.getItem("gp_name")  || null;
+let selectedType    = "progress";
+let anChart         = null;
+
+// ── API helper ──
+async function api(method, path, body) {
+  const opts = { method, headers: { "Content-Type": "application/json" } };
+  if (token) opts.headers["Authorization"] = `Bearer ${token}`;
+  if (body)  opts.body = JSON.stringify(body);
+  const res  = await fetch(API + path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Request failed");
+  return data;
+}
+
+function saveSession(name) {
+  localStorage.setItem("gp_token", token);
+  localStorage.setItem("gp_user",  currentUser);
+  localStorage.setItem("gp_name",  name || currentUser);
+}
+
+// ── Views ──
+function showView(id) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function showMsg(text, type) {
+  const el = document.getElementById("loginMsg");
+  el.textContent = text;
+  el.className = "message " + type;
+}
+
+function switchSection(s) {
+  document.getElementById("dashboardSection").style.display = s === "dashboard" ? "block" : "none";
+  document.getElementById("foldersSection").style.display   = s === "folders"   ? "block" : "none";
+  document.getElementById("analyticsSection").style.display = s === "analytics" ? "block" : "none";
+  document.getElementById("navDashboard").classList.toggle("active",  s === "dashboard");
+  document.getElementById("navFolders").classList.toggle("active",    s === "folders");
+  document.getElementById("navAnalytics").classList.toggle("active",  s === "analytics");
+  if (s === "folders")   renderFolders();
+  if (s === "analytics") renderAnalytics();
+}
+
+// ── Auth panels ──
+function showRegister() {
+  document.getElementById("loginSection").classList.add("hidden");
+  document.getElementById("registerSection").classList.remove("hidden");
+  document.getElementById("loginTagline").textContent = "Create your account";
+  showMsg("", "");
+}
+
+function showLogin() {
+  document.getElementById("registerSection").classList.add("hidden");
+  document.getElementById("loginSection").classList.remove("hidden");
+  document.getElementById("loginTagline").textContent = "Stay on top of your goals and schedule";
+  showMsg("", "");
+}
+
+// ── Password strength ──
+document.addEventListener("DOMContentLoaded", () => {
+  const pw = document.getElementById("registerPassword");
+  if (pw) pw.addEventListener("input", updatePasswordStrength);
+});
+
+function updatePasswordStrength() {
+  const pw = document.getElementById("registerPassword").value;
+  const checks = [pw.length >= 8, /\d/.test(pw), /[!@#$%^&*]/.test(pw), /[a-z]/.test(pw) && /[A-Z]/.test(pw)];
+  ["lengthRule","numberRule","symbolRule","caseRule"].forEach((id,i) =>
+    document.getElementById(id).classList.toggle("valid", checks[i]));
+  const score = checks.filter(Boolean).length;
+  document.querySelectorAll(".bar").forEach(b => { b.className = "bar"; });
+  for (let i = 0; i < score; i++) {
+    const cls = score <= 2 ? "red" : score === 3 ? "orange" : "green";
+    document.querySelectorAll(".bar")[i].classList.add("active", cls);
+  }
+}
+
+// ── Auth ──
+async function login() {
+  const email    = document.getElementById("loginEmail").value.trim().toLowerCase();
+  const password = document.getElementById("loginPassword").value;
+  if (!email || !password) return showMsg("Please enter email and password.", "error");
+  try {
+    const data = await api("POST", "/auth/login", { email, password });
+    token           = data.token;
+    currentUser     = data.user.email;
+    currentUserName = data.user.fullName;
+    saveSession(currentUserName);
+    await openDashboard();
+  } catch (err) {
+    showMsg(err.message, "error");
+  }
+}
+
+async function register() {
+  const firstName       = document.getElementById("firstName").value.trim();
+  const lastName        = document.getElementById("lastName").value.trim();
+  const email           = document.getElementById("registerEmail").value.trim().toLowerCase();
+  const confirmEmail    = document.getElementById("confirmEmail").value.trim().toLowerCase();
+  const password        = document.getElementById("registerPassword").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+  showMsg("", "");
+  if (!firstName || !lastName)       return showMsg("Enter first and last name.", "error");
+  if (!email || !confirmEmail)       return showMsg("Please enter your email twice.", "error");
+  if (email !== confirmEmail)        return showMsg("Emails do not match.", "error");
+  if (!password || !confirmPassword) return showMsg("Please enter your password twice.", "error");
+  const ok = password.length >= 8 && /\d/.test(password) && /[!@#$%^&*]/.test(password) && /[a-z]/.test(password) && /[A-Z]/.test(password);
+  if (!ok)                           return showMsg("Password does not meet requirements.", "error");
+  if (password !== confirmPassword)  return showMsg("Passwords do not match.", "error");
+  try {
+    await api("POST", "/auth/register", { firstName, lastName, email, password });
+    ["firstName","lastName","registerEmail","confirmEmail","registerPassword","confirmPassword"]
+      .forEach(id => { document.getElementById(id).value = ""; });
+    updatePasswordStrength();
+    showMsg("Account created! You can now log in.", "success");
+    setTimeout(showLogin, 1200);
+  } catch (err) {
+    showMsg(err.message, "error");
+  }
+}
+
+function logout() {
+  showModal({
+    title: "Log Out",
+    body: "Are you sure you want to log out?",
+    confirmText: "Log Out",
+    confirmColor: "#c0392b",
+    onConfirm: () => {
+      token = null; currentUser = null; currentUserName = null;
+      localStorage.removeItem("gp_token");
+      localStorage.removeItem("gp_user");
+      localStorage.removeItem("gp_name");
+      goals = []; folders = [];
+      showLogin(); showView("loginView");
+    }
+  });
+}
+
+async function openDashboard() {
+  const display = currentUserName || currentUser;
+  ["userLabel","userLabel2","userLabel3","userLabel4"].forEach(id =>
+    document.getElementById(id).textContent = display);
+  showView("dashView");
+  await loadData();
+  switchSection("dashboard");
+}
+
+async function loadData() {
+  try {
+    [goals, folders] = await Promise.all([
+      api("GET", "/goals"),
+      api("GET", "/folders"),
+    ]);
+  } catch (err) {
+    console.error("Failed to load data:", err);
+  }
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && document.getElementById("loginView").classList.contains("active"))
+    document.getElementById("registerSection").classList.contains("hidden") ? login() : register();
+});
+
+// ── Helpers ──
+function selectType(type) {
+  selectedType = type;
+  document.getElementById("typeProgress").classList.toggle("selected", type === "progress");
+  document.getElementById("typeCheckbox").classList.toggle("selected", type === "checkbox");
+}
+
+function loadFolderDropdown() {
+  const dd = document.getElementById("goalFolder");
+  dd.innerHTML = '<option value="">No Folder</option>';
+  folders.forEach(f => { dd.innerHTML += `<option value="${f.id}">${f.name}</option>`; });
+}
+
+function updateStats() {
+  const total = goals.length;
+  const done  = goals.filter(g => g.type === "checkbox" ? g.checked : g.progress === 100).length;
+  const pgs   = goals.filter(g => g.type === "progress");
+  const avg   = pgs.length ? Math.round(pgs.reduce((s,g) => s + g.progress, 0) / pgs.length) : null;
+  document.getElementById("statTotal").textContent   = total;
+  document.getElementById("statDone").textContent    = done;
+  document.getElementById("statAvg").textContent     = avg !== null ? avg + "%" : "—";
+  document.getElementById("statFolders").textContent = folders.length;
+}
+
+// ── Render Dashboard ──
+function render() {
+  const container = document.getElementById("goals");
+  container.innerHTML = "";
+  updateStats();
+  loadFolderDropdown();
+
+  if (goals.length === 0) {
+    container.innerHTML = `<div class="empty">No goals yet — add one above to get started!</div>`;
+    return;
+  }
+
+  goals.forEach((g) => {
+    const isCompleted = g.type === "checkbox" ? g.checked : g.progress === 100;
+    const div = document.createElement("div");
+    div.className = "goal" + (isCompleted ? " completed-goal" : "");
+
+    const folderName    = g.folder_name || null;
+    const folderBadge   = folderName ? `<span class="badge badge-folder">📁 ${folderName}</span>` : "";
+    const completedBadge = isCompleted ? `<span class="badge badge-done">✓ Done</span>` : "";
+
+    const interactive = g.type === "progress" ? `
+      <div class="progress-section">
+        <div class="progress-label"><span>Progress</span><span>${g.progress}%</span></div>
+        <div class="progress-bar"><div class="fill" style="width:${g.progress}%"></div></div>
+        <input type="range" min="0" max="100" value="${g.progress}" oninput="updateProgress('${g.id}',this.value)">
+      </div>` : `
+      <div class="checkbox-section">
+        <input type="checkbox" class="custom-checkbox" id="chk_${g.id}" ${g.checked?"checked":""} onchange="toggleCheck('${g.id}',this.checked)">
+        <label for="chk_${g.id}">${g.checked?"Completed!":"Mark as complete"}</label>
+      </div>`;
+
+    div.innerHTML = `
+      <div class="goal-header"><div class="goal-meta">
+        <div class="goal-title ${isCompleted&&g.type==='checkbox'?'struck':''}">${g.name}</div>
+        <div class="goal-badges">
+          <span class="badge badge-category">${g.genre}</span>
+          <span class="badge badge-type">${g.type==='checkbox'?'✅ Checkbox':'📊 Progress'}</span>
+          ${folderBadge}${completedBadge}
+        </div>
+      </div></div>
+      ${interactive}
+      <div class="actions">
+        <button class="btn-edit"   onclick="editGoal('${g.id}','${g.name.replace(/'/g,"\\'")}')">✏ Edit</button>
+        <button class="btn-delete" onclick="removeGoal('${g.id}','${g.name.replace(/'/g,"\\'")}')">✕ Delete</button>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+// ── Render Folders ──
+function renderFolders() {
+  updateStats();
+  const grid = document.getElementById("foldersGrid");
+  grid.innerHTML = "";
+
+  if (folders.length === 0) {
+    grid.innerHTML = `<div class="empty">No folders yet — create one above!</div>`;
+    return;
+  }
+
+  folders.forEach((f, fi) => {
+    const fg = goals.filter(g => g.folder_id === f.id);
+    const card = document.createElement("div");
+    card.className = "folder-card"; card.id = "folder_"+fi;
+
+    let goalsHTML = fg.length === 0 ? `<div class="folder-empty">No goals in this folder yet.</div>` :
+      fg.map(g => {
+        const done = g.type==="checkbox" ? g.checked : g.progress===100;
+        const ph = g.type==="progress" ? `
+          <div class="progress-section" style="margin-top:8px;">
+            <div class="progress-label"><span style="font-size:11px;">Progress</span><span style="font-size:11px;">${g.progress}%</span></div>
+            <div class="progress-bar"><div class="fill" style="width:${g.progress}%"></div></div>
+          </div>` :
+          `<div style="margin-top:6px;font-size:12px;color:${done?'var(--success)':'var(--muted)'};">${done?'✓ Completed':'○ In progress'}</div>`;
+        return `<div class="folder-goal-item">
+          <div class="goal-title">${g.name}</div>
+          <div class="goal-badges" style="margin-top:4px;">
+            <span class="badge badge-category">${g.genre}</span>
+            <span class="badge badge-type">${g.type==='checkbox'?'✅ Checkbox':'📊 Progress'}</span>
+            ${done?'<span class="badge badge-done">✓ Done</span>':''}
+          </div>${ph}</div>`;
+      }).join("");
+
+    card.innerHTML = `
+      <div class="folder-header" onclick="toggleFolder('folder_${fi}')">
+        <div class="folder-name">📁 ${f.name}<span class="folder-count">${fg.length} goal${fg.length!==1?'s':''}</span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="folder-delete-btn" onclick="event.stopPropagation();deleteFolder('${f.id}','${f.name.replace(/'/g,"\\'")}')">✕ Delete</button>
+          <span class="folder-chevron">▶</span>
+        </div>
+      </div>
+      <div class="folder-goals">${goalsHTML}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function toggleFolder(id) { document.getElementById(id).classList.toggle("open"); }
+
+// ── ANALYTICS ──
+function renderAnalytics() {
+  const total      = goals.length;
+  const completed  = goals.filter(g => g.type==="checkbox" ? g.checked : g.progress===100).length;
+  const progGoals  = goals.filter(g => g.type==="progress");
+  const avgComp    = progGoals.length ? Math.round(progGoals.reduce((s,g)=>s+g.progress,0)/progGoals.length) : 0;
+  const onTrack    = progGoals.length ? Math.round(progGoals.filter(g=>g.progress>=50).length/progGoals.length*100) : 0;
+
+  document.getElementById("anMetrics").innerHTML = `
+    <div class="an-metric">
+      <div class="an-metric-label">Goals Completed</div>
+      <div class="an-metric-val">${completed}</div>
+      <div class="an-metric-delta delta-up">▲ of ${total} total</div>
+    </div>
+    <div class="an-metric">
+      <div class="an-metric-label">On-Track Rate</div>
+      <div class="an-metric-val">${onTrack}%</div>
+      <div class="an-metric-delta ${onTrack>=50?'delta-up':'delta-down'}">${onTrack>=50?'▲':'▼'} progress goals ≥50%</div>
+    </div>
+    <div class="an-metric">
+      <div class="an-metric-label">Avg. Completion</div>
+      <div class="an-metric-val">${avgComp}%</div>
+      <div class="an-metric-delta ${avgComp>=50?'delta-up':'delta-down'}">${avgComp>=50?'▲':'▼'} across progress goals</div>
+    </div>
+    <div class="an-metric">
+      <div class="an-metric-label">Active Goals</div>
+      <div class="an-metric-val">${total}</div>
+      <div class="an-metric-delta delta-up">▲ ${folders.length} folder${folders.length!==1?'s':''}</div>
+    </div>`;
+
+  const top5 = [...progGoals].sort((a,b)=>b.progress-a.progress).slice(0,5);
+  const topEl = document.getElementById("anTopGoals");
+  topEl.innerHTML = top5.length === 0
+    ? `<div style="color:var(--muted);font-size:13px;font-style:italic;">No progress-bar goals yet.</div>`
+    : top5.map(g => {
+        const p = g.progress;
+        const c = p>=75?'var(--success)':p>=50?'var(--accent)':p>=25?'var(--warning)':'var(--danger)';
+        return `<div class="an-goal-item">
+          <div class="an-goal-info">
+            <span class="an-goal-name">${g.name}</span>
+            <span class="an-goal-pct" style="color:${c};">${p}%</span>
+          </div>
+          <div class="an-bar-track"><div class="an-bar-fill" style="width:${p}%;background:${c};"></div></div>
+        </div>`;
+      }).join("");
+
+  buildChart();
+  renderAnalyticsTable();
+}
+
+function buildChart() {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+  monday.setHours(0,0,0,0);
+
+  const weeks = [];
+  for (let w = 11; w >= 0; w--) {
+    const start = new Date(monday);
+    start.setDate(monday.getDate() - w * 7);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 7);
+    weeks.push({ start, end });
+  }
+
+  const labels = weeks.map(({start}) => {
+    const d = start.getDate();
+    const m = start.getMonth() + 1;
+    return `${m}/${d}`;
+  });
+
+  const createdData   = weeks.map(({start,end}) =>
+    goals.filter(g => g.created_at && new Date(g.created_at) >= start && new Date(g.created_at) < end).length
+  );
+  const completedData = weeks.map(({start,end}) =>
+    goals.filter(g => g.completed_at && new Date(g.completed_at) >= start && new Date(g.completed_at) < end).length
+  );
+
+  const hasData = createdData.some(v=>v>0) || completedData.some(v=>v>0);
+  const notice = document.getElementById("anChartNotice");
+  if (notice) notice.style.display = hasData ? "none" : "flex";
+
+  if (anChart) { anChart.destroy(); anChart = null; }
+  const ctx = document.getElementById("anLineChart").getContext("2d");
+  anChart = new Chart(ctx, {
+    type:"line",
+    data:{
+      labels,
+      datasets:[
+        { label:"Completed", data:completedData, borderColor:"rgba(168,85,247,1)", backgroundColor:"rgba(168,85,247,0.08)", borderWidth:2.5, pointRadius:4, pointBackgroundColor:"rgba(168,85,247,1)", pointBorderColor:"#1a1333", pointBorderWidth:2, tension:0.35, fill:true },
+        { label:"Created",   data:createdData,   borderColor:"rgba(192,132,252,1)", backgroundColor:"transparent", borderWidth:1.5, borderDash:[4,3], pointRadius:3, pointBackgroundColor:"rgba(192,132,252,1)", pointBorderColor:"#1a1333", pointBorderWidth:2, tension:0.35 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:"index", intersect:false },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{ backgroundColor:"rgba(31,10,63,0.95)", borderColor:"rgba(168,85,247,1)", borderWidth:1, titleColor:"#f3f0ff", bodyColor:"#f3f0ff", padding:10,
+          callbacks:{ title: items => `Week of ${labels[items[0].dataIndex]}` }
+        }
+      },
+      scales:{
+        x:{ grid:{ display:false }, ticks:{ font:{size:11}, color:"#b9b3d9", maxRotation:45, minRotation:45 } },
+        y:{ grid:{ color:"rgba(185,179,217,0.08)" }, ticks:{ font:{size:11}, color:"#b9b3d9", stepSize:1, precision:0 }, min:0 }
+      }
+    }
+  });
+}
+
+function renderAnalyticsTable() {
+  const cf = document.getElementById("anCategoryFilter").value;
+  const tf = document.getElementById("anTypeFilter").value;
+  const filtered = goals.filter(g => (!cf||g.genre===cf) && (!tf||g.type===tf));
+  const tbody = document.getElementById("anTableBody");
+  if (filtered.length===0) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:24px;">No goals match this filter.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(g => {
+    const done = g.type==="checkbox"?g.checked:g.progress===100;
+    const pct  = g.type==="progress"?g.progress:(g.checked?100:0);
+    const col  = pct>=75?'var(--success)':pct>=50?'var(--accent)':pct>=25?'var(--warning)':'var(--danger)';
+    const badge = done ? `<span class="an-badge badge-on">Done</span>`
+      : pct>=50 ? `<span class="an-badge badge-on">On track</span>`
+      : pct>=25 ? `<span class="an-badge badge-at">At risk</span>`
+      :           `<span class="an-badge badge-off">Off track</span>`;
+    const progCell = g.type==="progress" ? `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="an-bar-track" style="width:80px;"><div class="an-bar-fill" style="width:${pct}%;background:${col};"></div></div>
+        <span style="font-size:11px;font-weight:500;">${pct}%</span>
+      </div>` : `<span style="font-size:12px;color:${done?'var(--success)':'var(--muted)'};">${done?'✓ Done':'○ Pending'}</span>`;
+    return `<tr>
+      <td>${g.name}</td>
+      <td style="color:var(--muted);">${g.genre}</td>
+      <td style="color:var(--muted);">${g.type==='checkbox'?'✅ Checkbox':'📊 Progress'}</td>
+      <td>${progCell}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join("");
+}
+
+function setPeriod(el) {
+  document.querySelectorAll("#anPeriod span").forEach(s=>s.classList.remove("active"));
+  el.classList.add("active");
+}
+
+function toggleGuide() {
+  const g = document.getElementById("analyticsGuide");
+  const b = document.getElementById("guideToggleBtn");
+  g.classList.toggle("show");
+  b.textContent = g.classList.contains("show") ? "📖 Hide Analytics Guide" : "📖 Show Analytics Guide";
+}
+
+// ── Modal ──
+let _modalCallback = null;
+
+function showModal({ title, body, input, confirmText, confirmColor, onConfirm }) {
+  document.getElementById("gpModalTitle").textContent = title;
+  document.getElementById("gpModalBody").innerHTML = body;
+  document.getElementById("gpModalConfirm").textContent = confirmText || "Confirm";
+  document.getElementById("gpModalConfirm").style.background = confirmColor || "#a855f7";
+  const inp = document.getElementById("gpModalInput");
+  if (input !== undefined) {
+    inp.style.display = "block";
+    inp.value = input;
+    setTimeout(() => { inp.focus(); inp.select(); }, 50);
+  } else {
+    inp.style.display = "none";
+    inp.value = "";
+  }
+  _modalCallback = onConfirm;
+  document.getElementById("gpModalConfirm").onclick = confirmModal;
+  document.getElementById("gpModal").style.display = "flex";
+}
+
+function confirmModal() {
+  if (typeof _modalCallback !== "function") return;
+  const inp = document.getElementById("gpModalInput");
+  const val = inp.style.display !== "none" ? inp.value : undefined;
+  const cb  = _modalCallback;
+  closeModal();
+  cb(val);
+}
+
+function closeModal() {
+  document.getElementById("gpModal").style.display = "none";
+  _modalCallback = null;
+}
+
+document.getElementById("gpModal").addEventListener("click", e => {
+  if (e.target === document.getElementById("gpModal")) closeModal();
+});
+
+document.getElementById("gpModalInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") confirmModal();
+  if (e.key === "Escape") closeModal();
+});
+
+// ── Goal operations ──
+async function addGoal() {
+  const name     = document.getElementById("goalName").value.trim();
+  const genre    = document.getElementById("goalCategory").value;
+  const folderId = document.getElementById("goalFolder").value || null;
+  const err      = document.getElementById("formError");
+  err.textContent = "";
+  if (!name||!genre) { err.textContent="Please enter a goal name and select a category."; return; }
+  try {
+    const newGoal = await api("POST", "/goals", { name, genre, type: selectedType, folderId: folderId ? parseInt(folderId) : null });
+    // attach folder_name for display
+    if (folderId) {
+      const f = folders.find(f => f.id === parseInt(folderId));
+      if (f) newGoal.folder_name = f.name;
+    }
+    goals.push(newGoal);
+    document.getElementById("goalName").value="";
+    document.getElementById("goalCategory").value="";
+    render();
+  } catch (err2) {
+    err.textContent = err2.message;
+  }
+}
+
+async function updateProgress(id, v) {
+  const val = parseInt(v);
+  try {
+    const updated = await api("PATCH", `/goals/${id}`, { progress: val });
+    const idx = goals.findIndex(g => g.id === id);
+    if (idx !== -1) { goals[idx] = { ...goals[idx], ...updated }; }
+    render();
+  } catch(e) { console.error(e); }
+}
+
+async function toggleCheck(id, checked) {
+  try {
+    const updated = await api("PATCH", `/goals/${id}`, { checked });
+    const idx = goals.findIndex(g => g.id === id);
+    if (idx !== -1) { goals[idx] = { ...goals[idx], ...updated }; }
+    render();
+  } catch(e) { console.error(e); }
+}
+
+function editGoal(id, name) {
+  showModal({
+    title: "Edit Goal",
+    body: "Update the goal name below.",
+    input: name,
+    confirmText: "Save",
+    confirmColor: "#a855f7",
+    onConfirm: async val => {
+      if (!val || !val.trim()) return;
+      try {
+        const updated = await api("PATCH", `/goals/${id}`, { name: val.trim() });
+        const idx = goals.findIndex(g => g.id === id);
+        if (idx !== -1) { goals[idx] = { ...goals[idx], ...updated }; }
+        render();
+      } catch(e) { console.error(e); }
+    }
+  });
+}
+
+function removeGoal(id, name) {
+  showModal({
+    title: "Delete Goal",
+    body: `Are you sure you want to delete "<strong>${name}</strong>"? This cannot be undone.`,
+    confirmText: "Delete",
+    confirmColor: "#c0392b",
+    onConfirm: async () => {
+      try {
+        await api("DELETE", `/goals/${id}`);
+        goals = goals.filter(g => g.id !== id);
+        render();
+      } catch(e) { console.error(e); }
+    }
+  });
+}
+
+// ── Folder operations ──
+async function addFolder() {
+  const name = document.getElementById("folderName").value.trim();
+  const err  = document.getElementById("folderError");
+  err.textContent = "";
+  if (!name) { err.textContent="Please enter a folder name."; return; }
+  try {
+    const newFolder = await api("POST", "/folders", { name });
+    folders.push(newFolder);
+    document.getElementById("folderName").value="";
+    renderFolders();
+    loadFolderDropdown();
+    updateStats();
+  } catch (e) {
+    err.textContent = e.message;
+  }
+}
+
+function deleteFolder(id, name) {
+  showModal({
+    title: "Delete Folder",
+    body: `Delete "<strong>${name}</strong>"? Goals inside will be moved to No Folder.`,
+    confirmText: "Delete",
+    confirmColor: "#c0392b",
+    onConfirm: async () => {
+      try {
+        await api("DELETE", `/folders/${id}`);
+        folders = folders.filter(f => f.id !== id);
+        // clear folder reference on local goals
+        goals.forEach(g => { if (g.folder_id === id) { g.folder_id = null; g.folder_name = null; } });
+        renderFolders();
+        loadFolderDropdown();
+        updateStats();
+      } catch(e) { console.error(e); }
+    }
+  });
+}
+
+// ── Init ──
+if (token && currentUser) { openDashboard(); } else { showView("loginView"); }
+</script>
+</body>
+</html>
